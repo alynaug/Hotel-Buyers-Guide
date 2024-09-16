@@ -21,6 +21,8 @@ const CurrencyInput = ({ name, value, onChange, isCurrency = true }) => (
       const numericValue = parseFloat(e.target.value.replace(/[^0-9.-]+/g,"")) || 0;
       onChange({ target: { name, value: numericValue } });
     }}
+    variant="outlined"
+    size="small"
   />
 );
 
@@ -77,15 +79,15 @@ const HotelBusinessBuyersGuide = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1, bgcolor: 'background.paper', p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Hotel Business Buyer's Guide
-      </Typography>
-      <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-        <Tab label="Inputs" />
-        <Tab label="Metrics" />
-      </Tabs>
-      <Box sx={{ mt: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f3f4f6' }}>
+      <Box sx={{ flexGrow: 1, p: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          Hotel Business Buyer's Guide
+        </Typography>
+        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ mb: 2 }}>
+          <Tab label="Inputs" />
+          <Tab label="Metrics" />
+        </Tabs>
         {activeTab === 0 && (
           <>
             <Card>
@@ -132,7 +134,7 @@ const HotelBusinessBuyersGuide = () => {
         )}
         {activeTab === 1 && results && (
           <>
-            <Grid container spacing={2}>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
               {[
                 { label: 'Total Investment', value: formatCurrency(results.totalInvestment) },
                 { label: 'ROI', value: results.roi.toFixed(2) + '%' },
@@ -140,34 +142,34 @@ const HotelBusinessBuyersGuide = () => {
                 { label: 'Total Profit', value: formatCurrency(results.totalProfit) },
               ].map(({ label, value }, index) => (
                 <Grid item xs={3} key={index}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6">{value}</Typography>
-                      <Typography variant="body2">{label}</Typography>
-                    </CardContent>
+                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 2 }}>
+                    <Typography variant="h5" fontWeight="bold">{value}</Typography>
+                    <Typography variant="body2" color="text.secondary">{label}</Typography>
                   </Card>
                 </Grid>
               ))}
             </Grid>
-            <Card sx={{ mt: 4 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Yearly Profit Trend</Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={results.yearlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="year" />
-                    <YAxis tickFormatter={formatCurrency} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Legend />
-                    <Line type="monotone" dataKey="income" stroke={COLORS[0]} name="Income" />
-                    <Line type="monotone" dataKey="expenses" stroke={COLORS[1]} name="Expenses" />
-                    <Line type="monotone" dataKey="profit" stroke={COLORS[2]} name="Profit" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            <Grid container spacing={2} sx={{ mt: 2 }}>
-              <Grid item xs={6}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Yearly Profit Trend</Typography>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={results.yearlyData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="year" />
+                        <YAxis tickFormatter={formatCurrency} />
+                        <Tooltip formatter={(value) => formatCurrency(value)} />
+                        <Legend />
+                        <Line type="monotone" dataKey="income" stroke={COLORS[0]} name="Income" />
+                        <Line type="monotone" dataKey="expenses" stroke={COLORS[1]} name="Expenses" />
+                        <Line type="monotone" dataKey="profit" stroke={COLORS[2]} name="Profit" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Average Yearly Financial Breakdown</Typography>
@@ -196,7 +198,7 @@ const HotelBusinessBuyersGuide = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Break-Even Analysis</Typography>
@@ -220,9 +222,16 @@ const HotelBusinessBuyersGuide = () => {
             </Grid>
           </>
         )}
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="contained" onClick={calculateROI} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' } }}>
+            Calculate ROI
+          </Button>
+        </Box>
       </Box>
-      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button variant="contained" onClick={calculateROI}>Calculate ROI</Button>
+      <Box component="footer" sx={{ bgcolor: '#1e293b', color: 'white', p: 2, mt: 'auto', textAlign: 'center' }}>
+        <Typography variant="body2">
+          Powered by <a href="https://graphio.co.th/" target="_blank" rel="noopener noreferrer" style={{ color: 'white' }}>Graphio</a>
+        </Typography>
       </Box>
     </Box>
   );
