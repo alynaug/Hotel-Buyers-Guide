@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine, BarChart, Bar } from 'recharts';
 import { TextField, Button, Tabs, Tab, Box, Card, CardContent, Typography, Grid } from '@mui/material';
+import { Document, Page, Text, View, StyleSheet, pdf, Image, Font } from '@react-pdf/renderer';
+import html2canvas from 'html2canvas';
 
-const formatCurrency = (value) => '฿' + value.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+Font.register({
+  family: 'Sarabun',
+  src: '/fonts/Sarabun-Regular.ttf'
+});
+
+// ... rest of your code
+
+const formatCurrency = (value) => '\u0E3F' + value.toLocaleString('th-TH', { maximumFractionDigits: 0 });
 const COLORS = ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2'];
 
 const scenarios = [
@@ -49,7 +58,7 @@ const YearlyProfitTrend = ({ yearlyData }) => {
     <Card>
       <CardContent>
         <Typography variant="h6" gutterBottom>Yearly Profit Trend</Typography>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={300} id="yearly-profit-trend">
           <LineChart data={yearlyData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="year" />
@@ -94,6 +103,15 @@ const postContractScenarios = [
   { name: 'Optimistic', factor: 1.2 },
 ];
 
+const pdfStyles = StyleSheet.create({
+  page: { padding: 30, fontFamily: 'Sarabun' },
+  section: { margin: 10, padding: 10 },
+  title: { fontSize: 24, marginBottom: 10 },
+  subtitle: { fontSize: 18, marginBottom: 10 },
+  text: { fontSize: 12, marginBottom: 5 },
+  image: { marginVertical: 15, maxWidth: '100%' },
+});
+
 const HotelBusinessBuyersGuide = () => {
   const [formData, setFormData] = useState({
     premium: 10000000, 
@@ -127,7 +145,7 @@ const HotelBusinessBuyersGuide = () => {
     let breakEvenYear = null;
   
     const postContractFactor = postContractScenarios.find(s => s.name === postContractScenario).factor;
-      
+
     for (let year = 1; year <= contractDuration; year++) {
       const currentRental = monthlyRental * (year >= 3 ? (year >= 6 ? 1.21 : 1.1) : 1);
       const isPostContract = year > timeLeft;
@@ -163,6 +181,49 @@ const HotelBusinessBuyersGuide = () => {
       postContractScenario
     });
     setActiveTab(1);
+  };
+
+  const PDFReport = ({ results, chartImages }) => (
+    <Document>
+      <Page size="A4" style={pdfStyles.page}>
+        <View style={pdfStyles.section}>
+          <Text style={pdfStyles.title}>Hotel Business ROI Analysis</Text>
+          <Text style={pdfStyles.subtitle}>Summary</Text>
+          <Text style={pdfStyles.text}>Total Investment: {formatCurrency(results.totalInvestment)}</Text>
+          <Text style={pdfStyles.text}>ROI: {results.roi.toFixed(2)}%</Text>
+          <Text style={pdfStyles.text}>Payback Period: {results.paybackPeriod} years</Text>
+          <Text style={pdfStyles.text}>Total Profit: {formatCurrency(results.totalProfit)}</Text>
+        </View>
+        {chartImages.map((image, index) => (
+          <View key={index} style={pdfStyles.section}>
+            <Text style={pdfStyles.subtitle}>Chart {index + 1}</Text>
+            <Image style={pdfStyles.image} src={image} />
+          </View>
+        ))}
+      </Page>
+    </Document>
+  );
+
+  const generatePDF = async () => {
+    const chartIds = ['yearly-profit-trend', 'financial-breakdown', 'break-even-analysis'];
+    const chartImages = await Promise.all(
+      chartIds.map(async (id) => {
+        const element = document.getElementById(id);
+        const canvas = await html2canvas(element);
+        return canvas.toDataURL('image/png');
+      })
+    );
+  
+    const pdfDoc = <PDFReport results={results} chartImages={chartImages} />;
+    const asPdf = pdf();
+    asPdf.updateContainer(pdfDoc);
+    const blob = await asPdf.toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'hotel_roi_analysis.pdf';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -286,7 +347,7 @@ const HotelBusinessBuyersGuide = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Average Yearly Financial Breakdown</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} id="financial-breakdown">
                       <PieChart>
                         <Pie
                           data={[
@@ -318,7 +379,7 @@ const HotelBusinessBuyersGuide = () => {
                 <Card>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Break-Even Analysis</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} id="break-even-analysis">
                       <AreaChart data={results.yearlyData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="year" />
@@ -339,9 +400,16 @@ const HotelBusinessBuyersGuide = () => {
           </>
         )}
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" onClick={calculateROI} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' } }}>
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="contained" onClick={calculateROI} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' }, mr: 2 }}>
             Calculate ROI
           </Button>
+          {results && (
+            <Button variant="contained" onClick={generatePDF} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' } }}>
+              Generate PDF Report
+            </Button>
+          )}
+        </Box>
         </Box>
       </Box>
       <Box component="footer" sx={{ bgcolor: '#1e293b', color: 'white', p: 2, mt: 'auto', textAlign: 'center' }}>
