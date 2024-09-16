@@ -3,6 +3,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { TextField, Button, Tabs, Tab, Box, Card, CardContent, Typography, Grid } from '@mui/material';
 import { Document, Page, Text, View, StyleSheet, pdf, Image, Font } from '@react-pdf/renderer';
 import html2canvas from 'html2canvas';
+import AIRecommendations from './AIRecommendations';
+import ErrorBoundary from './ErrorBoundary';
 
 Font.register({
   family: 'Sarabun',
@@ -227,7 +229,8 @@ const HotelBusinessBuyersGuide = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f3f4f6' }}>
+    <ErrorBoundary>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f3f4f6' }}>
       <Box sx={{ flexGrow: 1, p: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
           Hotel Business Buyer's Guide
@@ -397,6 +400,9 @@ const HotelBusinessBuyersGuide = () => {
                 </Card>
               </Grid>
             </Grid>
+            <Grid item xs={12}>
+              <AIRecommendations formData={formData} results={results} />
+            </Grid>
           </>
         )}
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
@@ -418,6 +424,7 @@ const HotelBusinessBuyersGuide = () => {
         </Typography>
       </Box>
     </Box>
+  </ErrorBoundary>
   );
 };
 
