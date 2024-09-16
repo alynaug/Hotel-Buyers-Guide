@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine, BarChart, Bar } from 'recharts';
 import { TextField, Button, Tabs, Tab, Box, Card, CardContent, Typography, Grid } from '@mui/material';
 
 const formatCurrency = (value) => '฿' + value.toLocaleString('th-TH', { maximumFractionDigits: 0 });
@@ -44,10 +44,34 @@ const CurrencyInput = ({ name, value, onChange, isCurrency = true }) => (
   />
 );
 
+const ContractTimeAnalysis = ({ contractDuration, timeLeft }) => {
+  const data = [
+    { name: 'Time Passed', value: contractDuration - timeLeft },
+    { name: 'Time Left', value: timeLeft },
+    { name: 'Total Duration', value: contractDuration }
+  ];
+
+  return (
+    <ResponsiveContainer width="100%" height={100}>
+      <BarChart layout="vertical" data={data}>
+        <XAxis type="number" domain={[0, contractDuration]} />
+        <YAxis type="category" dataKey="name" />
+        <Tooltip />
+        <Bar dataKey="value" stackId="a">
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={index === 1 ? '#66b266' : (index === 0 ? '#ff9999' : '#e0e0e0')} />
+          ))}
+        </Bar>
+        <ReferenceLine x={contractDuration * 0.8} stroke="red" label="Risk Zone" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
+
 const HotelBusinessBuyersGuide = () => {
   const [formData, setFormData] = useState({
     premium: 10000000, monthlyRental: 30000, electricityExpenses: 12000, salaryExpenses: 65000,
-    waterExpenses: 2000, otherExpenses: 5000, roomRentalIncome: 270000, restaurantRentalIncome: 30000,
+    waterExpenses: 2000, otherExpenses: 5000, roomRentalIncome: 270000, utilityRoomRentalIncome: 30000,
     contractDuration: 9, timeLeft: 7
   });
   const [results, setResults] = useState(null);
@@ -61,18 +85,21 @@ const HotelBusinessBuyersGuide = () => {
 
   const calculateROI = () => {
     const { premium, monthlyRental, electricityExpenses, salaryExpenses, waterExpenses, otherExpenses,
-            roomRentalIncome, restaurantRentalIncome, contractDuration } = formData;
+            roomRentalIncome, utilityRoomRentalIncome, contractDuration, timeLeft } = formData;
     const yearlyData = [];
     let totalIncome = 0, totalExpenses = 0, cumulativeProfit = -premium;
     let breakEvenYear = null;
-
+  
+    // Calculate risk factor based on time left
+    const riskFactor = 1 + ((contractDuration - timeLeft) / contractDuration);
+  
     for (let year = 1; year <= contractDuration; year++) {
       const currentRental = monthlyRental * (year >= 3 ? (year >= 6 ? 1.21 : 1.1) : 1);
-      const roomRentalVariation = 1 + (Math.random() * (selectedScenario.income.max - selectedScenario.income.min) + selectedScenario.income.min);
-      const expensesVariation = 1 + (Math.random() * (selectedScenario.expenses.max - selectedScenario.expenses.min) + selectedScenario.expenses.min);
+      const roomRentalVariation = (1 + (Math.random() * (selectedScenario.income.max - selectedScenario.income.min) + selectedScenario.income.min)) / (year > timeLeft ? riskFactor : 1);
+      const expensesVariation = (1 + (Math.random() * (selectedScenario.expenses.max - selectedScenario.expenses.min) + selectedScenario.expenses.min)) * (year > timeLeft ? riskFactor : 1);
       const currentRoomRentalIncome = roomRentalIncome * roomRentalVariation;
       const yearlyExpenses = ((currentRental + electricityExpenses + salaryExpenses + waterExpenses + otherExpenses) * 12) * expensesVariation;
-      const yearlyIncome = (currentRoomRentalIncome + restaurantRentalIncome) * 12;
+      const yearlyIncome = (currentRoomRentalIncome + utilityRoomRentalIncome) * 12;
       const yearlyProfit = yearlyIncome - yearlyExpenses;
       cumulativeProfit += yearlyProfit;
       if (cumulativeProfit > 0 && !breakEvenYear) breakEvenYear = year;
@@ -80,18 +107,21 @@ const HotelBusinessBuyersGuide = () => {
       totalExpenses += yearlyExpenses;
       yearlyData.push({ year, income: yearlyIncome, expenses: yearlyExpenses, profit: yearlyProfit, cumulativeProfit });
     }
-
+  
     const totalProfit = totalIncome - totalExpenses - premium;
     const roi = (totalProfit / premium) * 100;
-
+  
     setResults({
       totalInvestment: premium,
       totalProfit,
       roi,
-      paybackPeriod: premium / (totalProfit / contractDuration),
+      paybackPeriod: breakEvenYear || 'N/A',
       yearlyData,
       averageYearlyData: { income: totalIncome / contractDuration, expenses: totalExpenses / contractDuration },
-      breakEvenYear
+      breakEvenYear,
+      contractDuration,
+      timeLeft,
+      riskFactor
     });
     setActiveTab(1);
   };
@@ -179,25 +209,17 @@ const HotelBusinessBuyersGuide = () => {
               ))}
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Yearly Profit Trend</Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={results.yearlyData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" />
-                        <YAxis tickFormatter={formatCurrency} />
-                        <Tooltip formatter={(value) => formatCurrency(value)} />
-                        <Legend />
-                        <Line type="monotone" dataKey="income" stroke={COLORS[0]} name="Income" />
-                        <Line type="monotone" dataKey="expenses" stroke={COLORS[1]} name="Expenses" />
-                        <Line type="monotone" dataKey="profit" stroke={COLORS[2]} name="Profit" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Contract Time Analysis</Typography>
+                <ContractTimeAnalysis contractDuration={results.contractDuration} timeLeft={results.timeLeft} />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Risk Factor: {results.riskFactor.toFixed(2)} (Higher value indicates increased risk)
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
