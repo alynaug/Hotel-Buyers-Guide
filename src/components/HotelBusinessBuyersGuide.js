@@ -44,6 +44,26 @@ const CurrencyInput = ({ name, value, onChange, isCurrency = true }) => (
   />
 );
 
+const YearlyProfitTrend = ({ yearlyData }) => {
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>Yearly Profit Trend</Typography>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={yearlyData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="year" />
+            <YAxis tickFormatter={(value) => '฿' + value.toLocaleString('th-TH', { maximumFractionDigits: 0 })} />
+            <Tooltip formatter={(value) => '฿' + value.toLocaleString('th-TH', { maximumFractionDigits: 0 })} />
+            <Legend />
+            <Line type="monotone" dataKey="profit" stroke="#82ca9d" name="Yearly Profit" />
+          </LineChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+};
+
 const ContractTimeAnalysis = ({ contractDuration, timeLeft }) => {
   const data = [
     { name: 'Time Passed', value: contractDuration - timeLeft },
@@ -209,17 +229,17 @@ const HotelBusinessBuyersGuide = () => {
               ))}
             </Grid>
             <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Contract Time Analysis</Typography>
-                <ContractTimeAnalysis contractDuration={results.contractDuration} timeLeft={results.timeLeft} />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Risk Factor: {results.riskFactor.toFixed(2)} (Higher value indicates increased risk)
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>Contract Time Analysis</Typography>
+                    <ContractTimeAnalysis contractDuration={results.contractDuration} timeLeft={results.timeLeft} />
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      Risk Factor: {results.riskFactor.toFixed(2)} (Higher value indicates increased risk)
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
@@ -248,6 +268,9 @@ const HotelBusinessBuyersGuide = () => {
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <YearlyProfitTrend yearlyData={results.yearlyData} />
               </Grid>
               <Grid item xs={12}>
                 <Card>
