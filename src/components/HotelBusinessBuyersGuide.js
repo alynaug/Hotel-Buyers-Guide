@@ -11,8 +11,6 @@ Font.register({
   src: '/fonts/Sarabun-Regular.ttf'
 });
 
-// ... rest of your code
-
 const formatCurrency = (value) => '\u0E3F' + value.toLocaleString('th-TH', { maximumFractionDigits: 0 });
 const COLORS = ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2'];
 
@@ -38,6 +36,12 @@ const scenarios = [
     expenses: { min: -0.20, max: 0.05 },
     disclaimer: 'Income varies between 0% and +15%,\nExpenses vary between -20% and +5%.'
   }
+];
+
+const postContractScenarios = [
+  { name: 'Pessimistic', factor: 0.8 },
+  { name: 'Neutral', factor: 1 },
+  { name: 'Optimistic', factor: 1.2 },
 ];
 
 const CurrencyInput = ({ name, value, onChange, isCurrency = true }) => (
@@ -98,12 +102,6 @@ const ContractTimeAnalysis = ({ contractDuration, timeLeft }) => {
     </ResponsiveContainer>
   );
 };
-
-const postContractScenarios = [
-  { name: 'Pessimistic', factor: 0.8 },
-  { name: 'Neutral', factor: 1 },
-  { name: 'Optimistic', factor: 1.2 },
-];
 
 const pdfStyles = StyleSheet.create({
   page: { padding: 30, fontFamily: 'Sarabun' },
@@ -231,200 +229,212 @@ const HotelBusinessBuyersGuide = () => {
   return (
     <ErrorBoundary>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f3f4f6' }}>
-      <Box sx={{ flexGrow: 1, p: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          Hotel Business Buyer's Guide
-        </Typography>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ mb: 2 }}>
-          <Tab label="Inputs" />
-          <Tab label="Metrics" />
-        </Tabs>
-        {activeTab === 0 && (
-          <>
-            <Card>
-              <CardContent>
-                <Grid container spacing={2}>
-                {Object.entries(formData).map(([key, value]) => (
-                  <Grid item xs={6} key={key}>
-                    <Typography variant="subtitle2">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</Typography>
-                    <CurrencyInput 
-                      name={key} 
-                      value={value} 
-                      onChange={handleInputChange} 
-                      isCurrency={!['contractDuration', 'timeLeft'].includes(key)}
-                    />
+        <Box sx={{ flexGrow: 1, p: 3 }}>
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            Thailand Hotel Business Buyer's Guide
+          </Typography>
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} sx={{ mb: 2 }}>
+            <Tab label="Inputs" />
+            <Tab label="Metrics" />
+          </Tabs>
+          {activeTab === 0 && (
+            <>
+              <Card sx={{ mb: 2 }}>
+                <CardContent>
+                  <Grid container spacing={2}>
+                    {Object.entries(formData).map(([key, value]) => (
+                      <Grid item xs={6} key={key}>
+                        <Typography variant="subtitle2">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</Typography>
+                        <CurrencyInput 
+                          name={key} 
+                          value={value} 
+                          onChange={handleInputChange} 
+                          isCurrency={!['contractDuration', 'timeLeft'].includes(key)}
+                        />
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
-                </Grid>
-              </CardContent>
-            </Card>
-            <Card sx={{ mt: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Post-Contract Scenario</Typography>
-                <Grid container spacing={2}>
-                  {postContractScenarios.map((scenario, index) => (
-                    <Grid item xs={4} key={index}>
-                      <Box 
-                        sx={{ 
-                          p: 2, 
-                          bgcolor: postContractScenario === scenario.name ? '#e0f2f1' : '#f5f5f5',
-                          borderRadius: 1, 
-                          cursor: 'pointer',
-                          border: postContractScenario === scenario.name ? '2px solid #009688' : 'none'
-                        }}
-                        onClick={() => setPostContractScenario(scenario.name)}
-                      >
-                        <Typography variant="subtitle1">{scenario.name}</Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
-            </Card>
-            <Card sx={{ mt: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Select Scenario</Typography>
-                <Grid container spacing={2}>
-                  {scenarios.map((scenario, index) => (
-                    <Grid item xs={4} key={index}>
-                      <Box 
-                        sx={{ 
-                          p: 2, 
-                          bgcolor: scenario.color, 
-                          borderRadius: 1, 
-                          cursor: 'pointer',
-                          border: selectedScenario.name === scenario.name ? '2px solid blue' : 'none'
-                        }}
-                        onClick={() => setSelectedScenario(scenario)}
-                      >
-                        <Typography variant="subtitle1">{scenario.name}</Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-                {selectedScenario && (
-                  <Box sx={{ mt: 2, p: 2, bgcolor: '#e2e8f0', borderRadius: 1 }}>
-                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <span style={{ marginRight: '8px', fontSize: '1.2em' }}>ℹ</span>
-                      Scenario Impact:
-                    </Typography>
-                    <Typography variant="body2" sx={{ pl: 3, whiteSpace: 'pre-line' }}>
-                      {selectedScenario.disclaimer}
-                    </Typography>
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-        {activeTab === 1 && results && (
-          <>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              {[
-                { label: 'Total Investment', value: formatCurrency(results.totalInvestment) },
-                { label: 'ROI', value: results.roi.toFixed(2) + '%' },
-                { label: 'Payback Period', value: results.paybackPeriod.toFixed(2) + ' years' },
-                { label: 'Total Profit', value: formatCurrency(results.totalProfit) },
-              ].map(({ label, value }, index) => (
-                <Grid item xs={3} key={index}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 2 }}>
-                    <Typography variant="h5" fontWeight="bold">{value}</Typography>
-                    <Typography variant="body2" color="text.secondary">{label}</Typography>
+                </CardContent>
+              </Card>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Post-Contract Scenario</Typography>
+                      <Grid container spacing={2}>
+                        {postContractScenarios.map((scenario, index) => (
+                          <Grid item xs={4} key={index}>
+                            <Box 
+                              sx={{ 
+                                p: 2, 
+                                bgcolor: postContractScenario === scenario.name ? '#e0f2f1' : '#f5f5f5',
+                                borderRadius: 1, 
+                                cursor: 'pointer',
+                                border: postContractScenario === scenario.name ? '2px solid #009688' : 'none',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onClick={() => setPostContractScenario(scenario.name)}
+                            >
+                              <Typography variant="subtitle2">{scenario.name}</Typography>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </CardContent>
                   </Card>
                 </Grid>
-              ))}
-            </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Contract Time Analysis</Typography>
-                    <ContractTimeAnalysis contractDuration={results.contractDuration} timeLeft={results.timeLeft} />
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Post-Contract Scenario: {results.postContractScenario}
-                    </Typography>
-                  </CardContent>
-                </Card>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Select Scenario</Typography>
+                      <Grid container spacing={2}>
+                        {scenarios.map((scenario, index) => (
+                          <Grid item xs={4} key={index}>
+                            <Box 
+                              sx={{ 
+                                p: 2, 
+                                bgcolor: scenario.color, 
+                                borderRadius: 1, 
+                                cursor: 'pointer',
+                                border: selectedScenario.name === scenario.name ? '2px solid blue' : 'none',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onClick={() => setSelectedScenario(scenario)}
+                            >
+                              <Typography variant="subtitle2">{scenario.name}</Typography>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                      {selectedScenario && (
+                        <Box sx={{ mt: 2, p: 2, bgcolor: '#e2e8f0', borderRadius: 1 }}>
+                          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <span style={{ marginRight: '8px', fontSize: '1.2em' }}>ℹ</span>
+                            Scenario Impact:
+                          </Typography>
+                          <Typography variant="body2" sx={{ pl: 3, whiteSpace: 'pre-line' }}>
+                            {selectedScenario.disclaimer}
+                          </Typography>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Average Yearly Financial Breakdown</Typography>
-                    <ResponsiveContainer width="100%" height={300} id="financial-breakdown">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Income', value: results.averageYearlyData.income },
-                            { name: 'Expenses', value: results.averageYearlyData.expenses },
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {[0, 1].map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={formatCurrency} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <YearlyProfitTrend yearlyData={results.yearlyData} />
-              </Grid>
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>Break-Even Analysis</Typography>
-                    <ResponsiveContainer width="100%" height={300} id="break-even-analysis">
-                      <AreaChart data={results.yearlyData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="year" />
-                        <YAxis tickFormatter={formatCurrency} />
-                        <Tooltip formatter={(value) => formatCurrency(value)} />
-                        <Legend />
-                        <Area type="monotone" dataKey="cumulativeProfit" stroke={COLORS[3]} fill={COLORS[3]} name="Cumulative Profit" />
-                        <ReferenceLine y={0} stroke="red" strokeDasharray="3 3" label="Break-even point" />
-                        {results.breakEvenYear && (
-                          <ReferenceLine x={results.breakEvenYear} stroke="green" strokeDasharray="3 3" label={`Year ${results.breakEvenYear}`} />
-                        )}
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <AIRecommendations formData={formData} results={results} />
-            </Grid>
-          </>
-        )}
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" onClick={calculateROI} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' }, mr: 2 }}>
-            Calculate ROI
-          </Button>
-          {results && (
-            <Button variant="contained" onClick={generatePDF} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' } }}>
-              Generate PDF Report
-            </Button>
+            </>
           )}
+          {activeTab === 1 && results && (
+            <>
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                {[
+                  { label: 'Total Investment', value: formatCurrency(results.totalInvestment) },
+                  { label: 'ROI', value: results.roi.toFixed(2) + '%' },
+                  { label: 'Payback Period', value: results.paybackPeriod.toFixed(2) + ' years' },
+                  { label: 'Total Profit', value: formatCurrency(results.totalProfit) },
+                ].map(({ label, value }, index) => (
+                  <Grid item xs={3} key={index}>
+                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 2 }}>
+                      <Typography variant="h5" fontWeight="bold">{value}</Typography>
+                      <Typography variant="body2" color="text.secondary">{label}</Typography>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Contract Time Analysis</Typography>
+                      <ContractTimeAnalysis contractDuration={results.contractDuration} timeLeft={results.timeLeft} />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Post-Contract Scenario: {results.postContractScenario}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Average Yearly Financial Breakdown</Typography>
+                      <ResponsiveContainer width="100%" height={300} id="financial-breakdown">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Income', value: results.averageYearlyData.income },
+                              { name: 'Expenses', value: results.averageYearlyData.expenses },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {[0, 1].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={formatCurrency} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <YearlyProfitTrend yearlyData={results.yearlyData} />
+                </Grid>
+                <Grid item xs={12}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>Break-Even Analysis</Typography>
+                      <ResponsiveContainer width="100%" height={300} id="break-even-analysis">
+                        <AreaChart data={results.yearlyData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="year" />
+                          <YAxis tickFormatter={formatCurrency} />
+                          <Tooltip formatter={(value) => formatCurrency(value)} />
+                          <Legend />
+                          <Area type="monotone" dataKey="cumulativeProfit" stroke={COLORS[3]} fill={COLORS[3]} name="Cumulative Profit" />
+                          <ReferenceLine y={0} stroke="red" strokeDasharray="3 3" label="Break-even point" />
+                          {results.breakEvenYear && (
+                            <ReferenceLine x={results.breakEvenYear} stroke="green" strokeDasharray="3 3" label={`Year ${results.breakEvenYear}`} />
+                          )}
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+              <Grid item xs={12}>
+                <AIRecommendations formData={formData} results={results} />
+              </Grid>
+            </>
+          )}
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button variant="contained" onClick={calculateROI} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' }, mr: 2 }}>
+              Calculate ROI
+            </Button>
+            {results && (
+              <Button variant="contained" onClick={generatePDF} sx={{ bgcolor: '#1e293b', '&:hover': { bgcolor: '#334155' } }}>
+                Generate PDF Report
+              </Button>
+            )}
+          </Box>
         </Box>
+        <Box component="footer" sx={{ bgcolor: '#1e293b', color: 'white', p: 2, mt: 'auto', textAlign: 'center' }}>
+          <Typography variant="body2">
+            Powered by <a href="https://graphio.co.th/" target="_blank" rel="noopener noreferrer" style={{ color: 'white' }}>Graphio</a>
+          </Typography>
         </Box>
       </Box>
-      <Box component="footer" sx={{ bgcolor: '#1e293b', color: 'white', p: 2, mt: 'auto', textAlign: 'center' }}>
-        <Typography variant="body2">
-          Powered by <a href="https://graphio.co.th/" target="_blank" rel="noopener noreferrer" style={{ color: 'white' }}>Graphio</a>
-        </Typography>
-      </Box>
-    </Box>
-  </ErrorBoundary>
+    </ErrorBoundary>
   );
 };
 

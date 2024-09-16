@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, Typography, CircularProgress, Box } from '@mui/material';
+import { Card, CardContent, Typography, CircularProgress, Box, Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -10,6 +10,23 @@ const openai = new OpenAI({
 const AIRecommendations = ({ formData, results }) => {
   const [recommendations, setRecommendations] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+    setPin('');
+    setError('');
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  const handlePinChange = (event) => {
+    setPin(event.target.value);
+  };
 
   const generateRecommendations = useCallback(async () => {
     setLoading(true);
@@ -30,14 +47,14 @@ const AIRecommendations = ({ formData, results }) => {
   2. **Suggestions for optimizing operations**: Offer specific, action-oriented recommendations to further improve profitability, focusing on areas where efficiency gains can be made.
   3. **Comparisons with industry benchmarks**: If industry benchmarks are not available, provide general advice on how the business can outperform competitors and capitalize on market trends.
   4. **Potential risks and mitigation strategies**: Acknowledge potential risks but maintain an optimistic outlook. Provide confident strategies for risk mitigation, minimizing any tones of caution.
-  5. **Ideas for additional revenue streams**: Offer creative and potentially high-impact revenue-generating ideas based on the property’s characteristics and market opportunities.
+  5. **Ideas for additional revenue streams**: Offer creative and potentially high-impact revenue-generating ideas based on the property's characteristics and market opportunities.
   
   Ensure you refer to all financial figures in Thai baht (THB), not dollars.
   
   Format the response as a JSON object with clear, actionable insights.`;
   
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4-1106-preview",
         messages: [
           { role: "system", content: "You are a seasoned investment analyst providing confident and data-driven recommendations." },
           { role: "user", content: prompt }
@@ -61,11 +78,14 @@ const AIRecommendations = ({ formData, results }) => {
     setLoading(false);
   }, [formData, results]);
 
-  useEffect(() => {
-    if (results) {
+  const handleGenerateAnalysis = () => {
+    if (pin === process.env.REACT_APP_ANALYSIS_PIN) {
+      handleCloseDialog();
       generateRecommendations();
+    } else {
+      setError('Incorrect PIN. Please try again.');
     }
-  }, [results, generateRecommendations]);
+  };
 
   if (loading) {
     return (
@@ -79,13 +99,45 @@ const AIRecommendations = ({ formData, results }) => {
   }
 
   if (!recommendations) {
-    return null;
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>Deep Analysis</Typography>
+          <Button variant="contained" onClick={handleOpenDialog}>
+            Generate Deep Analysis
+          </Button>
+          <Dialog open={openDialog} onClose={handleCloseDialog}>
+            <DialogTitle>Enter PIN</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Please enter the 4-digit PIN to generate the deep analysis.
+              </DialogContentText>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="PIN"
+                type="password"
+                fullWidth
+                value={pin}
+                onChange={handlePinChange}
+                error={!!error}
+                helperText={error}
+                inputProps={{ maxLength: 4 }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDialog}>Cancel</Button>
+              <Button onClick={handleGenerateAnalysis}>Generate</Button>
+            </DialogActions>
+          </Dialog>
+        </CardContent>
+      </Card>
+    );
   }
 
   const capitalize = (text) => text.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
   const renderNestedObject = (obj) => {
-    // If it's an array (like action items or strategies), we display them as a numbered list
     if (Array.isArray(obj)) {
       return (
         <Box sx={{ pl: 2 }}>
@@ -102,7 +154,6 @@ const AIRecommendations = ({ formData, results }) => {
       );
     }
 
-    // If it's a regular object, just render its key-value pairs
     return (
       <Box sx={{ pl: 2 }}>
         {Object.entries(obj).map(([nestedKey, nestedValue]) => (
