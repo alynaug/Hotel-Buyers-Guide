@@ -88,11 +88,25 @@ const ContractTimeAnalysis = ({ contractDuration, timeLeft }) => {
   );
 };
 
+const postContractScenarios = [
+  { name: 'Pessimistic', factor: 0.8 },
+  { name: 'Neutral', factor: 1 },
+  { name: 'Optimistic', factor: 1.2 },
+];
+
 const HotelBusinessBuyersGuide = () => {
   const [formData, setFormData] = useState({
-    premium: 10000000, monthlyRental: 30000, electricityExpenses: 12000, salaryExpenses: 65000,
-    waterExpenses: 2000, otherExpenses: 5000, roomRentalIncome: 270000, utilityRoomRentalIncome: 30000,
-    contractDuration: 9, timeLeft: 7
+    premium: 10000000, 
+    monthlyRental: 30000, 
+    electricityExpenses: 12000, 
+    salaryExpenses: 65000,
+    waterExpenses: 2000, 
+    otherExpenses: 5000, 
+    roomRentalIncome: 270000, 
+    utilityRoomRentalIncome: 30000,
+    contractDuration: 9, 
+    timeLeft: 7,  // Add a comma here
+    postContractScenario: 'Neutral'
   });
   const [results, setResults] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
@@ -105,22 +119,25 @@ const HotelBusinessBuyersGuide = () => {
 
   const calculateROI = () => {
     const { premium, monthlyRental, electricityExpenses, salaryExpenses, waterExpenses, otherExpenses,
-            roomRentalIncome, utilityRoomRentalIncome, contractDuration, timeLeft } = formData;
+            roomRentalIncome, utilityRoomRentalIncome, contractDuration, timeLeft, postContractScenario } = formData;
     const yearlyData = [];
     let totalIncome = 0, totalExpenses = 0, cumulativeProfit = -premium;
     let breakEvenYear = null;
   
-    // Calculate risk factor based on time left
-    const riskFactor = 1 + ((contractDuration - timeLeft) / contractDuration);
+    const postContractFactor = postContractScenarios.find(s => s.name === postContractScenario).factor;
   
     for (let year = 1; year <= contractDuration; year++) {
       const currentRental = monthlyRental * (year >= 3 ? (year >= 6 ? 1.21 : 1.1) : 1);
-      const roomRentalVariation = (1 + (Math.random() * (selectedScenario.income.max - selectedScenario.income.min) + selectedScenario.income.min)) / (year > timeLeft ? riskFactor : 1);
-      const expensesVariation = (1 + (Math.random() * (selectedScenario.expenses.max - selectedScenario.expenses.min) + selectedScenario.expenses.min)) * (year > timeLeft ? riskFactor : 1);
-      const currentRoomRentalIncome = roomRentalIncome * roomRentalVariation;
-      const yearlyExpenses = ((currentRental + electricityExpenses + salaryExpenses + waterExpenses + otherExpenses) * 12) * expensesVariation;
+      const isPostContract = year > timeLeft;
+      
+      const roomRentalVariation = (1 + (Math.random() * (selectedScenario.income.max - selectedScenario.income.min) + selectedScenario.income.min));
+      const expensesVariation = (1 + (Math.random() * (selectedScenario.expenses.max - selectedScenario.expenses.min) + selectedScenario.expenses.min));
+      
+      const currentRoomRentalIncome = roomRentalIncome * roomRentalVariation * (isPostContract ? postContractFactor : 1);
+      const yearlyExpenses = ((currentRental + electricityExpenses + salaryExpenses + waterExpenses + otherExpenses) * 12) * expensesVariation * (isPostContract ? postContractFactor : 1);
       const yearlyIncome = (currentRoomRentalIncome + utilityRoomRentalIncome) * 12;
       const yearlyProfit = yearlyIncome - yearlyExpenses;
+      
       cumulativeProfit += yearlyProfit;
       if (cumulativeProfit > 0 && !breakEvenYear) breakEvenYear = year;
       totalIncome += yearlyIncome;
@@ -141,7 +158,7 @@ const HotelBusinessBuyersGuide = () => {
       breakEvenYear,
       contractDuration,
       timeLeft,
-      riskFactor
+      postContractScenario
     });
     setActiveTab(1);
   };
@@ -170,6 +187,29 @@ const HotelBusinessBuyersGuide = () => {
                         onChange={handleInputChange} 
                         isCurrency={!['contractDuration', 'timeLeft'].includes(key)}
                       />
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+            <Card sx={{ mt: 2 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Post-Contract Scenario</Typography>
+                <Grid container spacing={2}>
+                  {postContractScenarios.map((scenario, index) => (
+                    <Grid item xs={4} key={index}>
+                      <Box 
+                        sx={{ 
+                          p: 2, 
+                          bgcolor: formData.postContractScenario === scenario.name ? '#e0f2f1' : '#f5f5f5',
+                          borderRadius: 1, 
+                          cursor: 'pointer',
+                          border: formData.postContractScenario === scenario.name ? '2px solid #009688' : 'none'
+                        }}
+                        onClick={() => setFormData(prev => ({ ...prev, postContractScenario: scenario.name }))}
+                      >
+                        <Typography variant="subtitle1">{scenario.name}</Typography>
+                      </Box>
                     </Grid>
                   ))}
                 </Grid>
@@ -235,7 +275,7 @@ const HotelBusinessBuyersGuide = () => {
                     <Typography variant="h6" gutterBottom>Contract Time Analysis</Typography>
                     <ContractTimeAnalysis contractDuration={results.contractDuration} timeLeft={results.timeLeft} />
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Risk Factor: {results.riskFactor.toFixed(2)} (Higher value indicates increased risk)
+                      Post-Contract Scenario: {results.postContractScenario}
                     </Typography>
                   </CardContent>
                 </Card>
