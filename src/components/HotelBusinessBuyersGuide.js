@@ -6,9 +6,27 @@ const formatCurrency = (value) => '฿' + value.toLocaleString('th-TH', { maximu
 const COLORS = ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2'];
 
 const scenarios = [
-  { name: 'Worst Case', color: 'rgb(254, 226, 226)', income: { min: -0.10, max: 0.05 }, expenses: { min: -0.05, max: 0.15 } },
-  { name: 'Normal Case', color: 'rgb(254, 249, 195)', income: { min: -0.05, max: 0.10 }, expenses: { min: -0.10, max: 0.10 } },
-  { name: 'Best Case', color: 'rgb(220, 252, 231)', income: { min: 0, max: 0.15 }, expenses: { min: -0.20, max: 0.05 } }
+  { 
+    name: 'Worst Case', 
+    color: 'rgb(254, 226, 226)', 
+    income: { min: -0.10, max: 0.05 }, 
+    expenses: { min: -0.05, max: 0.15 },
+    disclaimer: 'Income varies between -10% and +5%,\nExpenses vary between -5% and +15%.'
+  },
+  { 
+    name: 'Normal Case', 
+    color: 'rgb(254, 249, 195)', 
+    income: { min: -0.05, max: 0.10 }, 
+    expenses: { min: -0.10, max: 0.10 },
+    disclaimer: 'Income varies between -5% and +10%,\nExpenses vary between -10% and +10%.'
+  },
+  { 
+    name: 'Best Case', 
+    color: 'rgb(220, 252, 231)', 
+    income: { min: 0, max: 0.15 }, 
+    expenses: { min: -0.20, max: 0.05 },
+    disclaimer: 'Income varies between 0% and +15%,\nExpenses vary between -20% and +5%.'
+  }
 ];
 
 const CurrencyInput = ({ name, value, onChange, isCurrency = true }) => (
@@ -128,6 +146,17 @@ const HotelBusinessBuyersGuide = () => {
                     </Grid>
                   ))}
                 </Grid>
+                {selectedScenario && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: '#e2e8f0', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <span style={{ marginRight: '8px', fontSize: '1.2em' }}>ℹ</span>
+                      Scenario Impact:
+                    </Typography>
+                    <Typography variant="body2" sx={{ pl: 3, whiteSpace: 'pre-line' }}>
+                      {selectedScenario.disclaimer}
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </>
