@@ -105,27 +105,29 @@ const HotelBusinessBuyersGuide = () => {
     roomRentalIncome: 270000, 
     utilityRoomRentalIncome: 30000,
     contractDuration: 9, 
-    timeLeft: 7,  // Add a comma here
-    postContractScenario: 'Neutral'
+    timeLeft: 7
   });
+  const [postContractScenario, setPostContractScenario] = useState('Neutral');
   const [results, setResults] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [selectedScenario, setSelectedScenario] = useState(scenarios[1]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name in formData) {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const calculateROI = () => {
     const { premium, monthlyRental, electricityExpenses, salaryExpenses, waterExpenses, otherExpenses,
-            roomRentalIncome, utilityRoomRentalIncome, contractDuration, timeLeft, postContractScenario } = formData;
+            roomRentalIncome, utilityRoomRentalIncome, contractDuration, timeLeft } = formData;
     const yearlyData = [];
     let totalIncome = 0, totalExpenses = 0, cumulativeProfit = -premium;
     let breakEvenYear = null;
   
     const postContractFactor = postContractScenarios.find(s => s.name === postContractScenario).factor;
-  
+      
     for (let year = 1; year <= contractDuration; year++) {
       const currentRental = monthlyRental * (year >= 3 ? (year >= 6 ? 1.21 : 1.1) : 1);
       const isPostContract = year > timeLeft;
@@ -178,17 +180,17 @@ const HotelBusinessBuyersGuide = () => {
             <Card>
               <CardContent>
                 <Grid container spacing={2}>
-                  {Object.entries(formData).map(([key, value]) => (
-                    <Grid item xs={6} key={key}>
-                      <Typography variant="subtitle2">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</Typography>
-                      <CurrencyInput 
-                        name={key} 
-                        value={value} 
-                        onChange={handleInputChange} 
-                        isCurrency={!['contractDuration', 'timeLeft'].includes(key)}
-                      />
-                    </Grid>
-                  ))}
+                {Object.entries(formData).map(([key, value]) => (
+                  <Grid item xs={6} key={key}>
+                    <Typography variant="subtitle2">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</Typography>
+                    <CurrencyInput 
+                      name={key} 
+                      value={value} 
+                      onChange={handleInputChange} 
+                      isCurrency={!['contractDuration', 'timeLeft'].includes(key)}
+                    />
+                  </Grid>
+                ))}
                 </Grid>
               </CardContent>
             </Card>
@@ -201,12 +203,12 @@ const HotelBusinessBuyersGuide = () => {
                       <Box 
                         sx={{ 
                           p: 2, 
-                          bgcolor: formData.postContractScenario === scenario.name ? '#e0f2f1' : '#f5f5f5',
+                          bgcolor: postContractScenario === scenario.name ? '#e0f2f1' : '#f5f5f5',
                           borderRadius: 1, 
                           cursor: 'pointer',
-                          border: formData.postContractScenario === scenario.name ? '2px solid #009688' : 'none'
+                          border: postContractScenario === scenario.name ? '2px solid #009688' : 'none'
                         }}
-                        onClick={() => setFormData(prev => ({ ...prev, postContractScenario: scenario.name }))}
+                        onClick={() => setPostContractScenario(scenario.name)}
                       >
                         <Typography variant="subtitle1">{scenario.name}</Typography>
                       </Box>
